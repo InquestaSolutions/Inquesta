@@ -1,5 +1,5 @@
 import { builder } from "../libraries/builder.ts";
-import { getUploadToken } from "../resolvers/file.ts";
+import { getUploadToken, uploadFileToS3 } from "../resolvers/file.ts";
 import { generateUrlSafeToken } from "../utils/token.ts";
 
 const uploadResponse = builder
@@ -52,6 +52,39 @@ builder.mutationField("request_upload", (t) =>
         return {
           success: false,
           message: "failed to request upload file url",
+        };
+      }
+    },
+  }),
+);
+
+// Server-side upload mutation — accepts base64 file content, uploads directly
+// to S3 from the server so the browser never touches S3 (no CORS needed).
+builder.mutationField("upload_file", (t) =>
+  t.field({
+    type: uploadResponse,
+    args: {
+      base64: t.arg.string({ required: true }),
+      mimetype: t.arg.string({ required: true }),
+    },
+    resolve: async (_parent, args, context) => {
+      try {
+        const filename = `uploads/${generateUrlSafeToken()}`;
+        const fileBuffer = Buffer.from(args.base64, "base64");
+        await uploadFileToS3(filename, fileBuffer, args.mimetype);
+        return {
+          success: true,
+          message: "file uploaded successfully",
+          data: {
+            url: "",
+            filename: filename,
+          },
+        };
+      } catch (error) {
+        context.logger.error(error);
+        return {
+          success: false,
+          message: "failed to upload file",
         };
       }
     },

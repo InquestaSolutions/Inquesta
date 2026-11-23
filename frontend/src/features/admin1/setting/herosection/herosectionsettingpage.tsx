@@ -36,12 +36,12 @@ const UPDATE_HERO = gql`
   }
 `;
 
-const REQUEST_UPLOAD = gql`
-  mutation requestUpload($mimetype: String!) {
-    request_upload(mimetype: $mimetype) {
+const UPLOAD_FILE = gql`
+  mutation uploadFile($base64: String!, $mimetype: String!) {
+    upload_file(base64: $base64, mimetype: $mimetype) {
       success
+      message
       data {
-        url
         filename
       }
     }
@@ -69,11 +69,11 @@ interface UpdateHeroResponse {
   };
 }
 
-interface RequestUploadResponse {
-  request_upload: {
+interface UploadFileResponse {
+  upload_file: {
     success: boolean;
+    message: string;
     data: {
-      url: string;
       filename: string;
     };
   };
@@ -114,8 +114,8 @@ export function HeroSectionSettings() {
   // Setup Mutations
   const [updateHero, { loading: updating }] =
     useMutation<UpdateHeroResponse>(UPDATE_HERO);
-  const [requestUpload, { loading: uploading }] =
-    useMutation<RequestUploadResponse>(REQUEST_UPLOAD);
+  const [uploadFile, { loading: uploading }] =
+    useMutation<UploadFileResponse>(UPLOAD_FILE);
 
   const isBusy = loading || updating || uploading;
 
@@ -211,25 +211,27 @@ export function HeroSectionSettings() {
         }
       }
 
-      // Upload new image if file was selected
+      // Upload new image if file was selected — server handles S3 upload directly
       if (formData.imageFile) {
-        const { data: uploadRes } = await requestUpload({
-          variables: { mimetype: formData.imageFile.type },
+        // Convert file to base64 so it can be sent via GraphQL
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]); // strip "data:image/...;base64," prefix
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(formData.imageFile!);
         });
 
-        if (uploadRes?.request_upload?.success) {
-          const { url, filename } = uploadRes.request_upload.data;
+        const { data: uploadRes } = await uploadFile({
+          variables: { base64, mimetype: formData.imageFile.type },
+        });
 
-          // Perform PUT request to presigned URL
-          await fetch(url, {
-            method: "PUT",
-            body: formData.imageFile,
-            headers: { "Content-Type": formData.imageFile.type },
-          });
-
-          finalImage = filename; // Use the generated filename for saving to DB
+        if (uploadRes?.upload_file?.success) {
+          finalImage = uploadRes.upload_file.data.filename;
         } else {
-          throw new Error("Failed to get upload authorization.");
+          throw new Error(uploadRes?.upload_file?.message || "Failed to upload image.");
         }
       }
 

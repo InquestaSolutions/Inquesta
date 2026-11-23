@@ -18,3 +18,19 @@ export async function getUploadToken(
   });
   return signedUrl;
 }
+
+// Uploads a file directly from the server to S3 (avoids browser CORS issues)
+export async function uploadFileToS3(
+  filePath: string,
+  fileContent: Buffer,
+  fileType: string,
+) {
+  const command = new PutObjectCommand({
+    Bucket: "Inquesta",
+    Key: filePath,
+    ContentType: fileType,
+    Body: fileContent,
+  });
+  await s3Bucket.send(command);
+  return filePath;
+}
