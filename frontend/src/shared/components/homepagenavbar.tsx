@@ -114,7 +114,8 @@ export function HomePageNavbar() {
                   </button>
 
                   {openDropdown === item.id && (
-                    <div className="lg:absolute lg:top-full left-0 mt-2 w-48 bg-[#1c2026] border border-outline-variant rounded-xl shadow-2xl py-2 z-[60] animate-in fade-in zoom-in duration-150">
+                    <div className="lg:absolute lg:top-full left-0 pt-3 w-48 z-[60]">
+                    <div className="bg-[#1c2026] border border-outline-variant rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in duration-150">
                       {item.subitems
                         .filter((s: NavSubitem) => s.isVisible)
                         .sort((a: NavSubitem, b: NavSubitem) => a.sortOrder - b.sortOrder)
@@ -131,6 +132,7 @@ export function HomePageNavbar() {
                             {sub.label}
                           </Link>
                         ))}
+                    </div>
                     </div>
                   )}
                 </div>
