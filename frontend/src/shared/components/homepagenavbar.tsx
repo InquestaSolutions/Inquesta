@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import { useAuth } from "../../features/auth/context/authcontext";
 import { Link, useNavigate } from "react-router";
 import { GET_NAV_ITEMS } from "../../features/nav/graphql/navOps";
@@ -33,7 +33,7 @@ export function HomePageNavbar() {
 
   // Fetch nav items from the API
   const { data } = useQuery<{ getNavItems: NavItem[] }>(GET_NAV_ITEMS);
-  const navItems = data?.getNavItems?.filter((item) => item.isVisible) ?? [];
+  const navItems = data?.getNavItems?.filter((item: NavItem) => item.isVisible) ?? [];
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -88,9 +88,9 @@ export function HomePageNavbar() {
           } lg:flex absolute lg:relative top-full left-0 w-full lg:w-auto bg-background/95 lg:bg-transparent flex-col lg:flex-row items-center p-6 lg:p-0 space-y-6 lg:space-y-0 lg:space-x-8 shadow-xl lg:shadow-none border-b lg:border-none border-outline-variant/50`}
         >
           {/* Dynamic nav items from API */}
-          {navItems.map((item) => {
+          {navItems.map((item: NavItem) => {
             const hasSubitems =
-              item.subitems.filter((s) => s.isVisible).length > 0;
+              item.subitems.filter((s: NavSubitem) => s.isVisible).length > 0;
 
             if (hasSubitems) {
               // Render as a dropdown
@@ -116,9 +116,9 @@ export function HomePageNavbar() {
                   {openDropdown === item.id && (
                     <div className="lg:absolute lg:top-full left-0 mt-2 w-48 bg-[#1c2026] border border-outline-variant rounded-xl shadow-2xl py-2 z-[60] animate-in fade-in zoom-in duration-150">
                       {item.subitems
-                        .filter((s) => s.isVisible)
-                        .sort((a, b) => a.sortOrder - b.sortOrder)
-                        .map((sub) => (
+                        .filter((s: NavSubitem) => s.isVisible)
+                        .sort((a: NavSubitem, b: NavSubitem) => a.sortOrder - b.sortOrder)
+                        .map((sub: NavSubitem) => (
                           <Link
                             key={sub.id}
                             to={sub.url}
