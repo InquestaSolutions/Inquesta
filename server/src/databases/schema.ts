@@ -237,3 +237,22 @@ export const courseResources = mysqlTable("course_resources", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const nav_items = mysqlTable("nav_items", {
+  id: int().autoincrement().primaryKey(),
+  label: varchar({ length: 100 }).notNull(),
+  url: varchar({ length: 255 }).notNull().default(""),
+  sort_order: int("sort_order").notNull().default(0),
+  is_visible: boolean("is_visible").notNull().default(true),
+});
+
+export const nav_subitems = mysqlTable("nav_subitems", {
+  id: int().autoincrement().primaryKey(),
+  nav_item_id: int("nav_item_id")
+    .notNull()
+    .references(() => nav_items.id, { onDelete: "cascade" }),
+  label: varchar({ length: 100 }).notNull(),
+  url: varchar({ length: 255 }).notNull().default(""),
+  sort_order: int("sort_order").notNull().default(0),
+  is_visible: boolean("is_visible").notNull().default(true),
+});
+

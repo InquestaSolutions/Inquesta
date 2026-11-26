@@ -1,16 +1,41 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../../features/auth/context/authcontext"; // Adjust path as needed
+import { useQuery } from "@apollo/client";
+import { useAuth } from "../../features/auth/context/authcontext";
 import { Link, useNavigate } from "react-router";
+import { GET_NAV_ITEMS } from "../../features/nav/graphql/navOps";
+
+// Shape of data returned by getNavItems
+interface NavSubitem {
+  id: number;
+  label: string;
+  url: string;
+  sortOrder: number;
+  isVisible: boolean;
+}
+
+interface NavItem {
+  id: number;
+  label: string;
+  url: string;
+  sortOrder: number;
+  isVisible: boolean;
+  subitems: NavSubitem[];
+}
 
 export function HomePageNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null); // tracks which dropdown is open
 
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Fetch nav items from the API
+  const { data } = useQuery<{ getNavItems: NavItem[] }>(GET_NAV_ITEMS);
+  const navItems = data?.getNavItems?.filter((item) => item.isVisible) ?? [];
+
+  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -18,7 +43,6 @@ export function HomePageNavbar() {
         setIsProfileOpen(false);
       }
     };
-
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
@@ -61,27 +85,72 @@ export function HomePageNavbar() {
         <div
           className={`${
             isMenuOpen ? "flex" : "hidden"
-          } lg:flex absolute lg:relative top-full left-0 w-full lg:w-auto bg-background/95 lg:bg-transparent flex-col lg:flex-row items-center p-6 lg:p-0 space-y-6 lg:space-y-0 lg:space-x-8 shadow-xl lg:shadow-none border-b lg:border-none border-outline-variant/50 `}
+          } lg:flex absolute lg:relative top-full left-0 w-full lg:w-auto bg-background/95 lg:bg-transparent flex-col lg:flex-row items-center p-6 lg:p-0 space-y-6 lg:space-y-0 lg:space-x-8 shadow-xl lg:shadow-none border-b lg:border-none border-outline-variant/50`}
         >
-          <Link
-            className="text-on-surface-variant hover:text-on-surface transition-colors"
-            to="/courses"
-          >
-            Courses
-          </Link>
-          <Link
-            className="text-on-surface-variant hover:text-on-surface transition-colors"
-            to="/about"
-          >
-            About
-          </Link>
-          <Link
-            className="text-on-surface-variant hover:text-on-surface transition-colors"
-            to="/contact"
-          >
-            Contact
-          </Link>
+          {/* Dynamic nav items from API */}
+          {navItems.map((item) => {
+            const hasSubitems =
+              item.subitems.filter((s) => s.isVisible).length > 0;
 
+            if (hasSubitems) {
+              // Render as a dropdown
+              return (
+                <div
+                  key={item.id}
+                  className="relative"
+                  onMouseEnter={() => setOpenDropdown(item.id)}
+                  onMouseLeave={() => setOpenDropdown(null)}
+                >
+                  <button
+                    onClick={() =>
+                      setOpenDropdown(openDropdown === item.id ? null : item.id)
+                    }
+                    className="flex items-center gap-1 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    {item.label}
+                    <span className="material-symbols-outlined text-[16px]">
+                      expand_more
+                    </span>
+                  </button>
+
+                  {openDropdown === item.id && (
+                    <div className="lg:absolute lg:top-full left-0 mt-2 w-48 bg-[#1c2026] border border-outline-variant rounded-xl shadow-2xl py-2 z-[60] animate-in fade-in zoom-in duration-150">
+                      {item.subitems
+                        .filter((s) => s.isVisible)
+                        .sort((a, b) => a.sortOrder - b.sortOrder)
+                        .map((sub) => (
+                          <Link
+                            key={sub.id}
+                            to={sub.url}
+                            onClick={() => {
+                              setOpenDropdown(null);
+                              setIsMenuOpen(false);
+                            }}
+                            className="block px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+                          >
+                            {sub.label}
+                          </Link>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Render as a plain link
+            return (
+              <Link
+                key={item.id}
+                className="text-on-surface-variant hover:text-on-surface transition-colors"
+                to={item.url}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+
+          {/* Dashboard link for logged-in users */}
           {user && (
             <Link
               className="text-on-surface-variant hover:text-on-surface transition-colors"

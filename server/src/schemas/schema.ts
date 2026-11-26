@@ -14,4 +14,5 @@ import "./timetable.ts";
 import "./attendance.ts";
 import "./curriculum.ts";
 import "./resource.ts";
+import "./nav.ts";
 export const schema = builder.toSchema();
