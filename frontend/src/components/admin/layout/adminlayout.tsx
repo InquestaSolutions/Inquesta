@@ -127,6 +127,7 @@ export default function DashboardLayout() {
       subItems: [
         { name: "Notice", path: "/admin/settings/notice" },
         { name: "Hero Section", path: "/admin/settings/hero-section" },
+        { name: "Navigation", path: "/admin/settings/navigation" },
       ],
     },
   ];

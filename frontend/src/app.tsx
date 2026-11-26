@@ -29,6 +29,7 @@ import StudentEnrollmentsPage from "./features/students/pages/studentenrollmentp
 import StudentDashboardPage from "./features/students/pages/studentdashboardpage";
 import ParentDashboardLayout from "./components/parent/layout/parentdashboardlayout";
 import NoticePage from "./features/admin1/setting/notice/noticepage";
+import NavigationPage from "./features/admin1/setting/navigation/navigationpage";
 import ContactPage from "./shared/pages/contactpage";
 import HomePageLayout from "./layouts/homepagelayout";
 import AboutPage from "./shared/pages/aboutpage";
@@ -256,6 +257,7 @@ function App() {
                 path="hero-section"
                 element={<HeroSectionSettings></HeroSectionSettings>}
               />
+              <Route path="navigation" element={<NavigationPage />} />
             </Route>
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="notifications/:id" element={<NotificationDetailPage />} />
